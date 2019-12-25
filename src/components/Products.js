@@ -9,7 +9,8 @@ import AddInventory from 'components/AddInventory';
 class Products extends React.Component {
   state = {
     products: [],
-    sourceProducts: []
+    sourceProducts: [],
+    cartNum: 0
   };
 
   componentDidMount() {
@@ -19,13 +20,15 @@ class Products extends React.Component {
         sourceProducts: response.data
       });
     });
+
+    this.updateCartNum();
   }
 
   search = text => {
     let _products = [...this.state.sourceProducts];
     _products = _products.filter(p => {
       const matchArray = p.name.match(new RegExp(text, 'gi'));
-      return !!matchArray;
+      return matchArray;
     });
 
     this.setState({ products: _products });
@@ -77,10 +80,23 @@ class Products extends React.Component {
     });
   };
 
+  updateCartNum = async () => {
+    const cartNum = await this.initCartNum();
+    this.setState({
+      cartNum: cartNum
+    });
+  };
+
+  initCartNum = async () => {
+    const res = await axios.get('/carts');
+    const carts = res.data || [];
+    return carts.map(cart => cart.mount).reduce((pVal, cVal) => pVal + cVal, 0);
+  };
+
   render() {
     return (
       <div>
-        <ToolBox search={this.search} />
+        <ToolBox search={this.search} cartNum={this.state.cartNum} />
         <div className="products">
           <div className="columns is-multiline is-desktop">
             <TransitionGroup component={null}>
@@ -88,7 +104,12 @@ class Products extends React.Component {
                 return (
                   <CSSTransition classNames="product-fade" timeout={300} key={p.id}>
                     <div className="column is-3" key={p.id}>
-                      <Product product={p} update={this.update} delete={this.delete} />
+                      <Product
+                        product={p}
+                        update={this.update}
+                        delete={this.delete}
+                        updateCartNum={this.updateCartNum}
+                      />
                     </div>
                   </CSSTransition>
                 );
