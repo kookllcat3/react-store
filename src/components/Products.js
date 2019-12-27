@@ -1,8 +1,8 @@
 import React from 'react';
-import ToolBox from 'components/ToolBox';
-import Product from 'components/Product';
 import axios from 'commons/axios';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import ToolBox from 'components/ToolBox';
+import Product from 'components/Product';
 import Panel from 'components/Panel';
 import AddInventory from 'components/AddInventory';
 
@@ -20,18 +20,26 @@ class Products extends React.Component {
         sourceProducts: response.data
       });
     });
-
     this.updateCartNum();
   }
 
+  // search
   search = text => {
+    // 1. Get New Array
     let _products = [...this.state.sourceProducts];
+
+    // 2. Filter New Array
     _products = _products.filter(p => {
+      // name: Abcd text: ab   ===> ['Ab']
+      // text: '' ==> ["", "", "", "", ""]
       const matchArray = p.name.match(new RegExp(text, 'gi'));
-      return matchArray;
+      return !!matchArray;
     });
 
-    this.setState({ products: _products });
+    // 3. set State
+    this.setState({
+      products: _products
+    });
   };
 
   toAdd = () => {
@@ -48,12 +56,12 @@ class Products extends React.Component {
   add = product => {
     const _products = [...this.state.products];
     _products.push(product);
-    const _sourceProducts = [...this.state.sourceProducts];
-    _sourceProducts.push(product);
+    const _sProducts = [...this.state.sourceProducts];
+    _sProducts.push(product);
 
     this.setState({
       products: _products,
-      sourceProducts: _sourceProducts
+      sourceProducts: _sProducts
     });
   };
 
@@ -61,22 +69,21 @@ class Products extends React.Component {
     const _products = [...this.state.products];
     const _index = _products.findIndex(p => p.id === product.id);
     _products.splice(_index, 1, product);
-    const _sourceProducts = [...this.state.sourceProducts];
-    const _sindex = _products.findIndex(p => p.id === product.id);
-    _sourceProducts.splice(_sindex, 1, product);
-
+    const _sProducts = [...this.state.sourceProducts];
+    const _sIndex = _products.findIndex(p => p.id === product.id);
+    _sProducts.splice(_sIndex, 1, product);
     this.setState({
       products: _products,
-      sourceProducts: _sourceProducts
+      sourceProducts: _sProducts
     });
   };
 
   delete = id => {
     const _products = this.state.products.filter(p => p.id !== id);
-    const _sproducts = this.state.sourceProducts.filter(p => p.id !== id);
+    const _sProducts = this.state.sourceProducts.filter(p => p.id !== id);
     this.setState({
       products: _products,
-      sourceProducts: _sproducts
+      sourceProducts: _sProducts
     });
   };
 
@@ -88,9 +95,17 @@ class Products extends React.Component {
   };
 
   initCartNum = async () => {
-    const res = await axios.get('/carts');
+    const user = global.auth.getUser() || {};
+    const res = await axios.get('/carts', {
+      params: {
+        userId: user.email
+      }
+    });
     const carts = res.data || [];
-    return carts.map(cart => cart.mount).reduce((pVal, cVal) => pVal + cVal, 0);
+    const cartNum = carts
+      .map(cart => cart.mount) // [2, 1,2 ]
+      .reduce((a, value) => a + value, 0);
+    return cartNum;
   };
 
   render() {
@@ -116,9 +131,11 @@ class Products extends React.Component {
               })}
             </TransitionGroup>
           </div>
-          <button className="button is-primary add-btn" onClick={this.toAdd}>
-            add
-          </button>
+          {(global.auth.getUser() || {}).type === 1 && (
+            <button className="button is-primary add-btn" onClick={this.toAdd}>
+              add
+            </button>
+          )}
         </div>
       </div>
     );

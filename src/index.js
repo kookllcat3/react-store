@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Router from 'Router';
 import { ToastContainer } from 'react-toastify';
+import 'commons/auth';
 import 'css/app.scss';
 import 'css/style.scss';
 import 'react-toastify/dist/ReactToastify.css';

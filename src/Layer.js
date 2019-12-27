@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Header from 'components/Header';
 
-const Layer = props => (
-  <div className="main">
-    <Header nickName="Admin" />
-    {props.children}
-  </div>
-);
+const Layer = props => {
+  const user = useMemo(() => {
+    return global.auth.getUser() || {};
+  }, []);
+
+  return (
+    <div className="main">
+      <Header user={user} />
+      {props.children}
+    </div>
+  );
+};
 
 export default Layer;
